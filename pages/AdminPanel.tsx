@@ -344,8 +344,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ programs, onUpdatePrograms, stu
         studentMobile: student?.mobile || 'N/A',
         programName: program?.name || 'Unknown Program',
         subjectName: subject?.name || 'Unknown Subject',
+        chapterTitle: chapter?.title || 'Unknown Chapter',
         videoTitle: video?.title || 'Unknown Video',
     };
+  };
+
+  const formatDuration = (seconds: number) => {
+    if (isNaN(seconds) || seconds < 0) return '0s';
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    if (minutes > 0) {
+      return `${minutes}m ${remainingSeconds}s`;
+    }
+    return `${remainingSeconds}s`;
   };
 
   // --- Render Functions ---
@@ -625,7 +636,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ programs, onUpdatePrograms, stu
                                 <th className="th">Student</th>
                                 <th className="th">Course</th>
                                 <th className="th">Subject</th>
-                                <th className="th">Video Watched</th>
+                                <th className="th">Chapter</th>
+                                <th className="th">Video Title</th>
+                                <th className="th">Duration</th>
                                 <th className="th">Time</th>
                             </tr>
                         </thead>
@@ -640,7 +653,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ programs, onUpdatePrograms, stu
                                     </td>
                                     <td className="td">{details.programName}</td>
                                     <td className="td">{details.subjectName}</td>
+                                    <td className="td">{details.chapterTitle}</td>
                                     <td className="td">{details.videoTitle}</td>
+                                    <td className="td font-medium text-gray-800">{formatDuration(log.durationWatched)}</td>
                                     <td className="td">{new Date(log.timestamp).toLocaleString()}</td>
                                 </tr>
                                 )

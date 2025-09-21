@@ -48,4 +48,5 @@ export interface ActivityLog {
     chapterId: number;
     videoId: number;
     timestamp: number;
+    durationWatched: number; // in seconds
 }

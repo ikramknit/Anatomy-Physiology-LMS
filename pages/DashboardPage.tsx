@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import VideoPlayer from '../components/VideoPlayer';
 import Header from '../components/Header';
@@ -22,29 +22,51 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ programs, currentUser, on
   const [selectedYearIndex, setSelectedYearIndex] = useState(0);
   const [selectedSubjectIndex, setSelectedSubjectIndex] = useState(0);
   const [selectedVideo, setSelectedVideo] = useState<VideoLink | null>(null);
+  const [watchState, setWatchState] = useState<{ video: VideoLink; chapterId: number; startTime: number } | null>(null);
 
-  const handleSelectVideo = (video: VideoLink, chapterId: number) => {
-    setSelectedVideo(video);
-    if (currentUser.role === 'student' && currentUser.user) {
-      const student = currentUser.user as Student;
-      const program = programs[selectedProgramIndex];
-      const year = program?.years[selectedYearIndex];
-      const subject = year?.subjects[selectedSubjectIndex];
-      
-      if (student && program && year && subject) {
-          onLogActivity({
-            studentId: student.id,
-            programId: program.id,
-            yearId: year.id,
-            subjectId: subject.id,
-            chapterId: chapterId,
-            videoId: video.id,
-          });
+  const logWatchDuration = () => {
+    if (watchState && currentUser.role === 'student' && currentUser.user) {
+      const durationWatched = Math.round((Date.now() - watchState.startTime) / 1000);
+      if (durationWatched > 0) {
+          const student = currentUser.user as Student;
+          const program = programs[selectedProgramIndex];
+          const year = program?.years[selectedYearIndex];
+          const subject = year?.subjects[selectedSubjectIndex];
+
+          if (student && program && year && subject) {
+              onLogActivity({
+                  studentId: student.id,
+                  programId: program.id,
+                  yearId: year.id,
+                  subjectId: subject.id,
+                  chapterId: watchState.chapterId,
+                  videoId: watchState.video.id,
+                  durationWatched: durationWatched,
+              });
+          }
       }
     }
   };
 
+  useEffect(() => {
+    // This effect handles logging when the user navigates away or the component unmounts.
+    window.addEventListener('beforeunload', logWatchDuration);
+    
+    return () => {
+        logWatchDuration();
+        window.removeEventListener('beforeunload', logWatchDuration);
+    };
+  }, [watchState]); // Re-bind if watchState changes to capture the latest state
+
+  const handleSelectVideo = (video: VideoLink, chapterId: number) => {
+    logWatchDuration(); // Log duration for the previous video before starting the new one
+    setSelectedVideo(video);
+    setWatchState({ video, chapterId, startTime: Date.now() }); // Start timer for the new video
+  };
+
   const handleProgramChange = (index: number) => {
+    logWatchDuration();
+    setWatchState(null);
     setSelectedProgramIndex(index);
     setSelectedYearIndex(0);
     setSelectedSubjectIndex(0);
@@ -52,12 +74,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ programs, currentUser, on
   };
   
   const handleYearChange = (index: number) => {
+    logWatchDuration();
+    setWatchState(null);
     setSelectedYearIndex(index);
     setSelectedSubjectIndex(0);
     setSelectedVideo(null);
   };
 
   const handleSubjectChange = (index: number) => {
+    logWatchDuration();
+    setWatchState(null);
     setSelectedSubjectIndex(index);
     setSelectedVideo(null);
   };

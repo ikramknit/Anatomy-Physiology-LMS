@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserIcon, LockIcon, LoginIcon } from '../components/Icons';
+import { UserIcon, LockIcon, PhoneIcon, IdentificationIcon, BookOpenIcon } from '../components/Icons';
 import type { Program } from '../types';
 
 interface LoginPageProps {
@@ -16,156 +16,170 @@ const LoginPage: React.FC<LoginPageProps> = ({ programs, onAdminLogin, onStudent
   // Admin State
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
-  const [adminError, setAdminError] = useState('');
-
+  
   // Student Login State
   const [studentMobile, setStudentMobile] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
-  const [studentLoginError, setStudentLoginError] = useState('');
-
+  
   // Student Sign Up State
   const [signUpName, setSignUpName] = useState('');
   const [signUpMobile, setSignUpMobile] = useState('');
   const [signUpPassword, setSignUpPassword] = useState('');
-  const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
-  const [signUpProgramId, setSignUpProgramId] = useState<number>(programs[0]?.id || 0);
-  const [signUpError, setSignUpError] = useState('');
+  const [signUpProgramId, setSignUpProgramId] = useState(programs.length > 0 ? programs[0].id : 0);
+
+  const [error, setError] = useState('');
 
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setAdminError('');
+    setError('');
     if (adminEmail === 'admin@gmail.com' && adminPassword === 'admin@123') {
       onAdminLogin(true);
     } else {
-      setAdminError('Invalid email or password.');
+      setError('Invalid admin credentials.');
       onAdminLogin(false);
     }
   };
-
+  
   const handleStudentLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setStudentLoginError('');
+    setError('');
     const success = onStudentLogin(studentMobile, studentPassword);
     if (!success) {
-      setStudentLoginError('Invalid mobile number or password, or account is inactive.');
+      setError('Invalid mobile or password, or account is inactive.');
     }
   };
-
+  
   const handleStudentSignUpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSignUpError('');
-    if (!signUpName.trim()) {
-        setSignUpError('Please enter your full name.');
-        return;
-    }
+    setError('');
     if (signUpMobile.length !== 10 || !/^\d+$/.test(signUpMobile)) {
-        setSignUpError('Mobile number must be exactly 10 digits.');
+        setError("Mobile number must be 10 digits.");
         return;
     }
     if (signUpPassword.length < 6) {
-        setSignUpError('Password must be at least 6 characters long.');
+        setError("Password must be at least 6 characters long.");
         return;
     }
-    if (signUpPassword !== signUpConfirmPassword) {
-        setSignUpError('Passwords do not match.');
-        return;
-    }
-     if (signUpProgramId === 0) {
-        setSignUpError('Please select a course.');
+     if (!signUpName.trim()) {
+        setError("Please enter your full name.");
         return;
     }
     const success = onStudentSignUp(signUpName, signUpMobile, signUpPassword, signUpProgramId);
     if (!success) {
-        setSignUpError('A user with this mobile number already exists.');
+      setError('A student with this mobile number already exists.');
     }
   };
 
-  const TabButton: React.FC<{ tabName: typeof activeTab; label: string }> = ({ tabName, label }) => (
-    <button
-      onClick={() => setActiveTab(tabName)}
-      className={`w-full py-2.5 text-sm font-medium leading-5 rounded-lg
-        ${activeTab === tabName
-          ? 'bg-white shadow text-indigo-700'
-          : 'text-gray-500 hover:bg-white/[0.5] hover:text-gray-800'
-        }
-        focus:outline-none focus:ring-2 ring-offset-2 ring-offset-indigo-400 ring-white ring-opacity-60 transition`}
-    >
-      {label}
-    </button>
-  );
-  
-  const FormInput: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = (props) => (
-    <input {...props} className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
-  );
-  
-  const FormSelect: React.FC<React.SelectHTMLAttributes<HTMLSelectElement>> = (props) => (
-     <select {...props} className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-        {props.children}
-     </select>
-  );
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'student-login':
+        return (
+          <form onSubmit={handleStudentLoginSubmit} className="space-y-6">
+            <h2 className="text-2xl font-bold text-center text-gray-800">Student Login</h2>
+            <div>
+              <label htmlFor="student-mobile" className="sr-only">Mobile Number</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <PhoneIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input id="student-mobile" name="mobile" type="tel" value={studentMobile} onChange={e => setStudentMobile(e.target.value)} required className="input-field pl-10" placeholder="10-digit Mobile Number" />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="student-password" className="sr-only">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <LockIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input id="student-password" name="password" type="password" value={studentPassword} onChange={e => setStudentPassword(e.target.value)} required className="input-field pl-10" placeholder="Password" />
+              </div>
+            </div>
+            <button type="submit" className="w-full btn btn-indigo">Sign In</button>
+          </form>
+        );
+      case 'student-signup':
+        return (
+          <form onSubmit={handleStudentSignUpSubmit} className="space-y-6">
+            <h2 className="text-2xl font-bold text-center text-gray-800">Create Student Account</h2>
+            <div>
+              <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><IdentificationIcon className="h-5 w-5 text-gray-400" /></div>
+                 <input type="text" value={signUpName} onChange={e => setSignUpName(e.target.value)} required className="input-field pl-10" placeholder="Full Name"/>
+              </div>
+            </div>
+            <div>
+              <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><PhoneIcon className="h-5 w-5 text-gray-400" /></div>
+                 <input type="tel" value={signUpMobile} onChange={e => setSignUpMobile(e.target.value)} required className="input-field pl-10" placeholder="10-digit Mobile Number"/>
+              </div>
+            </div>
+             <div>
+              <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><BookOpenIcon className="h-5 w-5 text-gray-400" /></div>
+                 <select value={signUpProgramId} onChange={e => setSignUpProgramId(Number(e.target.value))} required className="input-field pl-10 appearance-none">
+                    {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                 </select>
+              </div>
+            </div>
+            <div>
+              <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><LockIcon className="h-5 w-5 text-gray-400" /></div>
+                 <input type="password" value={signUpPassword} onChange={e => setSignUpPassword(e.target.value)} required className="input-field pl-10" placeholder="Password (min. 6 characters)"/>
+              </div>
+            </div>
+            <button type="submit" className="w-full btn btn-indigo">Sign Up</button>
+          </form>
+        );
+      case 'admin-login':
+        return (
+          <form onSubmit={handleAdminSubmit} className="space-y-6">
+            <h2 className="text-2xl font-bold text-center text-gray-800">Admin Login</h2>
+            <div>
+              <label htmlFor="admin-email" className="sr-only">Email address</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <UserIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input id="admin-email" name="email" type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} autoComplete="email" required className="input-field pl-10" placeholder="Email address" />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="admin-password" className="sr-only">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <LockIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <input id="admin-password" name="password" type="password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} autoComplete="current-password" required className="input-field pl-10" placeholder="Password" />
+              </div>
+            </div>
+            <button type="submit" className="w-full btn btn-indigo">Sign In</button>
+          </form>
+        );
+    }
+  };
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-8">
-        <div className="w-full max-w-md">
-          <div className="flex space-x-1 rounded-xl bg-indigo-100 p-1 mb-6">
-            <TabButton tabName="student-login" label="Student Login" />
-            <TabButton tabName="student-signup" label="Student Sign Up" />
-            <TabButton tabName="admin-login" label="Admin Login" />
+    <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
+      <div className="max-w-md w-full mx-auto">
+        <div className="bg-white p-8 rounded-2xl shadow-lg">
+          <div className="mb-6 border-b border-gray-200">
+             <nav className="-mb-px flex space-x-4 justify-center" aria-label="Tabs">
+                <button onClick={() => { setActiveTab('student-login'); setError(''); }} className={`tab-button ${activeTab === 'student-login' ? 'tab-active' : ''}`}>Student Login</button>
+                <button onClick={() => { setActiveTab('student-signup'); setError(''); }} className={`tab-button ${activeTab === 'student-signup' ? 'tab-active' : ''}`}>Sign Up</button>
+                <button onClick={() => { setActiveTab('admin-login'); setError(''); }} className={`tab-button ${activeTab === 'admin-login' ? 'tab-active' : ''}`}>Admin</button>
+             </nav>
           </div>
-          
-          {activeTab === 'student-login' && (
-            <div>
-              <div className="text-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-800">Student Login</h2>
-                <p className="mt-2 text-gray-500">Access your courses.</p>
-              </div>
-              <form className="space-y-6" onSubmit={handleStudentLoginSubmit}>
-                <FormInput type="tel" value={studentMobile} onChange={e => setStudentMobile(e.target.value)} required placeholder="10-digit Mobile Number" />
-                <FormInput type="password" value={studentPassword} onChange={e => setStudentPassword(e.target.value)} required placeholder="Password" />
-                {studentLoginError && <p className="text-sm text-red-600 text-center">{studentLoginError}</p>}
-                <button type="submit" className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">Sign in</button>
-              </form>
-            </div>
-          )}
-
-          {activeTab === 'student-signup' && (
-             <div>
-              <div className="text-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-800">Create Student Account</h2>
-                 <p className="mt-2 text-gray-500">Join our learning community.</p>
-              </div>
-              <form className="space-y-4" onSubmit={handleStudentSignUpSubmit}>
-                <FormInput type="text" value={signUpName} onChange={e => setSignUpName(e.target.value)} required placeholder="Full Name" />
-                <FormInput type="tel" value={signUpMobile} onChange={e => setSignUpMobile(e.target.value)} required placeholder="10-digit Mobile Number" />
-                <FormSelect value={signUpProgramId} onChange={e => setSignUpProgramId(Number(e.target.value))} required>
-                    <option value={0} disabled>Select a Course</option>
-                    {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </FormSelect>
-                <FormInput type="password" value={signUpPassword} onChange={e => setSignUpPassword(e.target.value)} required placeholder="Password (min. 6 characters)" />
-                <FormInput type="password" value={signUpConfirmPassword} onChange={e => setSignUpConfirmPassword(e.target.value)} required placeholder="Confirm Password" />
-                {signUpError && <p className="text-sm text-red-600 text-center">{signUpError}</p>}
-                <button type="submit" className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors !mt-6">Sign Up</button>
-              </form>
-            </div>
-          )}
-          
-          {activeTab === 'admin-login' && (
-            <div>
-              <div className="text-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-800">Administrator Login</h2>
-                <p className="mt-2 text-gray-500">Access the admin panel.</p>
-              </div>
-              <form className="space-y-6" onSubmit={handleAdminSubmit}>
-                <FormInput type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} required placeholder="Email (admin@gmail.com)" />
-                <FormInput type="password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} required placeholder="Password (admin@123)" />
-                {adminError && <p className="text-sm text-red-600 text-center">{adminError}</p>}
-                <button type="submit" className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">Sign in</button>
-              </form>
-            </div>
-          )}
+          {error && <p className="mb-4 text-center text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
+          {renderTabContent()}
         </div>
       </div>
+       <style>{`
+          .input-field { @apply appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm; }
+          .btn { @apply group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white; }
+          .btn-indigo { @apply bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500; }
+          .tab-button { @apply whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none; }
+          .tab-active { @apply border-indigo-500 text-indigo-600; }
+      `}</style>
     </div>
   );
 };
