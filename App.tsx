@@ -1,43 +1,63 @@
-
 import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
-import { COURSES_DATA } from './constants';
+import { PROGRAM_DATA } from './constants';
 import type { VideoLink } from './types';
 
 const App: React.FC = () => {
-  const [selectedCourseIndex, setSelectedCourseIndex] = useState(0);
+  const [selectedProgramIndex, setSelectedProgramIndex] = useState(0);
+  const [selectedYearIndex, setSelectedYearIndex] = useState(0);
+  const [selectedSubjectIndex, setSelectedSubjectIndex] = useState(0);
   const [selectedVideo, setSelectedVideo] = useState<VideoLink | null>(null);
 
   const handleSelectVideo = (video: VideoLink) => {
     setSelectedVideo(video);
   };
 
-  const handleCourseChange = (index: number) => {
-    setSelectedCourseIndex(index);
-    setSelectedVideo(null); // Reset video when subject changes
+  const handleProgramChange = (index: number) => {
+    setSelectedProgramIndex(index);
+    setSelectedYearIndex(0);
+    setSelectedSubjectIndex(0);
+    setSelectedVideo(null);
   };
   
-  const selectedCourse = COURSES_DATA[selectedCourseIndex];
+  const handleYearChange = (index: number) => {
+    setSelectedYearIndex(index);
+    setSelectedSubjectIndex(0);
+    setSelectedVideo(null);
+  };
+
+  const handleSubjectChange = (index: number) => {
+    setSelectedSubjectIndex(index);
+    setSelectedVideo(null);
+  };
+
+  const selectedProgram = PROGRAM_DATA[selectedProgramIndex];
+  const selectedYear = selectedProgram?.years[selectedYearIndex];
+  const selectedSubject = selectedYear?.subjects[selectedSubjectIndex];
 
   return (
-    <div className="flex flex-col md:flex-row h-screen font-sans bg-slate-50 text-slate-900">
+    <div className="flex flex-col md:flex-row h-screen font-sans bg-gray-100 text-gray-900">
       <Sidebar
-        chapters={selectedCourse.chapters}
+        chapters={selectedSubject?.chapters ?? []}
         selectedVideo={selectedVideo}
         onSelectVideo={handleSelectVideo}
       />
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Header 
-          courses={COURSES_DATA}
-          selectedCourseIndex={selectedCourseIndex}
-          onCourseChange={handleCourseChange}
+          programs={PROGRAM_DATA}
+          selectedProgramIndex={selectedProgramIndex}
+          selectedYearIndex={selectedYearIndex}
+          selectedSubjectIndex={selectedSubjectIndex}
+          onProgramChange={handleProgramChange}
+          onYearChange={handleYearChange}
+          onSubjectChange={handleSubjectChange}
         />
-        <div className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <VideoPlayer video={selectedVideo} />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

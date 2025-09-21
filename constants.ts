@@ -1,4 +1,4 @@
-import type { Course } from './types';
+import type { Program } from './types';
 
 const getYouTubeVideoId = (url: string): string => {
   try {
@@ -1020,8 +1020,7 @@ const hospitalAndClinicalPharmacyChapters = [
     },
 ];
 
-
-const rawCourses = [
+const diplomaInHomeopathicPharmacySubjects = [
     {
         id: 1,
         name: "Elementary Human Anatomy and Physiology",
@@ -1074,14 +1073,54 @@ const rawCourses = [
     }
 ];
 
+const rawPrograms = [
+    {
+        id: 1,
+        name: "Diploma In homeopathic Pharmacy",
+        years: [
+            {
+                id: 1,
+                year: 1,
+                subjects: diplomaInHomeopathicPharmacySubjects.slice(0, 5),
+            },
+            {
+                id: 2,
+                year: 2,
+                subjects: diplomaInHomeopathicPharmacySubjects.slice(5),
+            }
+        ]
+    },
+    {
+        id: 2,
+        name: "ITI Electrician",
+        years: []
+    },
+    {
+        id: 3,
+        name: "Health & Inspector",
+        years: []
+    }
+];
 
-export const COURSES_DATA: Course[] = rawCourses.map(course => ({
-    ...course,
-    chapters: course.chapters.map(chapter => ({
-        ...chapter,
-        videos: chapter.videos.map(video => ({
-            ...video,
-            videoId: getYouTubeVideoId(video.url)
+const sortedPrograms = rawPrograms.sort((a, b) => a.name.localeCompare(b.name));
+
+export const PROGRAM_DATA: Program[] = sortedPrograms.map(program => ({
+    ...program,
+    years: [...program.years]
+        .sort((a, b) => a.year - b.year)
+        .map(year => ({
+            ...year,
+            subjects: [...year.subjects]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map(subject => ({
+                    ...subject,
+                    chapters: subject.chapters.map(chapter => ({
+                        ...chapter,
+                        videos: chapter.videos.map(video => ({
+                            ...video,
+                            videoId: getYouTubeVideoId(video.url)
+                        }))
+                    }))
+                }))
         }))
-    }))
 }));
