@@ -1,6 +1,6 @@
 import type { Program } from './types';
 
-const getYouTubeVideoId = (url: string): string => {
+export const getYouTubeVideoId = (url: string): string => {
   try {
     const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
     return urlObj.searchParams.get('v') || '';
@@ -1116,7 +1116,8 @@ export const PROGRAM_DATA: Program[] = sortedPrograms.map(program => ({
                     ...subject,
                     chapters: subject.chapters.map(chapter => ({
                         ...chapter,
-                        videos: chapter.videos.map(video => ({
+                        videos: chapter.videos.map((video, index) => ({
+                            id: Date.now() + index,
                             ...video,
                             videoId: getYouTubeVideoId(video.url)
                         }))

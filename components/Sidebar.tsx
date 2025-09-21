@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Chapter, VideoLink } from '../types';
 import { PlayIcon } from './Icons';
@@ -5,7 +6,7 @@ import { PlayIcon } from './Icons';
 interface SidebarProps {
   chapters: Chapter[];
   selectedVideo: VideoLink | null;
-  onSelectVideo: (video: VideoLink) => void;
+  onSelectVideo: (video: VideoLink, chapterId: number) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ chapters, selectedVideo, onSelectVideo }) => {
@@ -21,11 +22,11 @@ const Sidebar: React.FC<SidebarProps> = ({ chapters, selectedVideo, onSelectVide
               <h3 className="font-semibold text-gray-700 mb-2 px-2">{chapter.id}. {chapter.title}</h3>
               <ul className="space-y-1">
                 {chapter.videos.map((video) => {
-                  const isSelected = selectedVideo?.videoId === video.videoId;
+                  const isSelected = selectedVideo?.id === video.id;
                   return (
-                    <li key={video.videoId}>
+                    <li key={video.id}>
                       <button
-                        onClick={() => onSelectVideo(video)}
+                        onClick={() => onSelectVideo(video, chapter.id)}
                         className={`w-full text-left flex items-center gap-3 p-2.5 rounded-lg transition-colors duration-200 ${
                           isSelected
                             ? 'bg-indigo-100 text-indigo-700 font-semibold'

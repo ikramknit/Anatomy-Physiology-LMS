@@ -1,62 +1,125 @@
-import React, { useState } from 'react';
-import Sidebar from './components/Sidebar';
-import VideoPlayer from './components/VideoPlayer';
-import Header from './components/Header';
+
+import React, { useState, useEffect } from 'react';
+import Navbar from './components/Navbar';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import DashboardPage from './pages/DashboardPage';
+import AdminPanel from './pages/AdminPanel';
 import { PROGRAM_DATA } from './constants';
-import type { VideoLink } from './types';
+import type { Program, Student, ActivityLog } from './types';
+
+type CurrentUser = {
+  role: 'student' | 'admin' | 'guest';
+  user?: Student | { id: string; email: string };
+};
 
 const App: React.FC = () => {
-  const [selectedProgramIndex, setSelectedProgramIndex] = useState(0);
-  const [selectedYearIndex, setSelectedYearIndex] = useState(0);
-  const [selectedSubjectIndex, setSelectedSubjectIndex] = useState(0);
-  const [selectedVideo, setSelectedVideo] = useState<VideoLink | null>(null);
+  const [route, setRoute] = useState(window.location.hash || '#home');
+  const [programs, setPrograms] = useState<Program[]>(PROGRAM_DATA);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
+  const [currentUser, setCurrentUser] = useState<CurrentUser>({ role: 'guest' });
 
-  const handleSelectVideo = (video: VideoLink) => {
-    setSelectedVideo(video);
-  };
+  useEffect(() => {
+    const handleHashChange = () => {
+      setRoute(window.location.hash || '#home');
+    };
 
-  const handleProgramChange = (index: number) => {
-    setSelectedProgramIndex(index);
-    setSelectedYearIndex(0);
-    setSelectedSubjectIndex(0);
-    setSelectedVideo(null);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, []);
+
+  const handleAdminLogin = (success: boolean) => {
+    if (success) {
+      setCurrentUser({ role: 'admin', user: { id: 'admin', email: 'admin@gmail.com' } });
+      window.location.hash = '#admin';
+    }
   };
   
-  const handleYearChange = (index: number) => {
-    setSelectedYearIndex(index);
-    setSelectedSubjectIndex(0);
-    setSelectedVideo(null);
+  const handleStudentLogin = (mobile: string, password: string): boolean => {
+    const student = students.find(s => s.mobile === mobile && s.password === password);
+    if (student && student.isActive) {
+      setCurrentUser({ role: 'student', user: student });
+      window.location.hash = '#courses';
+      return true;
+    }
+    return false;
   };
 
-  const handleSubjectChange = (index: number) => {
-    setSelectedSubjectIndex(index);
-    setSelectedVideo(null);
+  const handleStudentSignUp = (name: string, mobile: string, password: string, programId: number): boolean => {
+    if (students.some(s => s.mobile === mobile)) {
+      return false; // mobile number already exists
+    }
+    const newStudent: Student = {
+      id: Date.now(),
+      name,
+      mobile,
+      password,
+      isActive: true,
+      programId,
+    };
+    setStudents([...students, newStudent]);
+    setCurrentUser({ role: 'student', user: newStudent });
+    window.location.hash = '#courses';
+    return true;
   };
 
-  const selectedProgram = PROGRAM_DATA[selectedProgramIndex];
-  const selectedYear = selectedProgram?.years[selectedYearIndex];
-  const selectedSubject = selectedYear?.subjects[selectedSubjectIndex];
+  const handleLogout = () => {
+    setCurrentUser({ role: 'guest' });
+    window.location.hash = '#home';
+  };
+
+  const handleNavigate = (path: string) => {
+    window.location.hash = path;
+  };
+
+  const handleLogActivity = (logData: Omit<ActivityLog, 'id' | 'timestamp'>) => {
+    const newLogEntry: ActivityLog = {
+      ...logData,
+      id: Date.now(),
+      timestamp: Date.now(),
+    };
+    setActivityLog(prevLog => [newLogEntry, ...prevLog]);
+  };
+
+  const renderPage = () => {
+    switch (route) {
+      case '#courses':
+        return <DashboardPage 
+                  programs={programs} 
+                  currentUser={currentUser} 
+                  onNavigate={handleNavigate} 
+                  onLogActivity={handleLogActivity} 
+                />;
+      case '#login':
+        return <LoginPage 
+                  programs={programs}
+                  onAdminLogin={handleAdminLogin} 
+                  onStudentLogin={handleStudentLogin} 
+                  onStudentSignUp={handleStudentSignUp} 
+                />;
+      case '#admin':
+        return currentUser.role === 'admin' ? 
+          <AdminPanel 
+            programs={programs} 
+            onUpdatePrograms={setPrograms}
+            students={students}
+            onUpdateStudents={setStudents}
+            activityLog={activityLog}
+          /> : <LoginPage programs={programs} onAdminLogin={handleAdminLogin} onStudentLogin={handleStudentLogin} onStudentSignUp={handleStudentSignUp} />;
+      case '#home':
+      default:
+        return <HomePage onNavigate={handleNavigate} />;
+    }
+  };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen font-sans bg-gray-100 text-gray-900">
-      <Sidebar
-        chapters={selectedSubject?.chapters ?? []}
-        selectedVideo={selectedVideo}
-        onSelectVideo={handleSelectVideo}
-      />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header 
-          programs={PROGRAM_DATA}
-          selectedProgramIndex={selectedProgramIndex}
-          selectedYearIndex={selectedYearIndex}
-          selectedSubjectIndex={selectedSubjectIndex}
-          onProgramChange={handleProgramChange}
-          onYearChange={handleYearChange}
-          onSubjectChange={handleSubjectChange}
-        />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-          <VideoPlayer video={selectedVideo} />
-        </main>
+    <div className="min-h-screen bg-gray-100 font-sans text-gray-900">
+      <Navbar currentUser={currentUser} onLogout={handleLogout} onNavigate={handleNavigate} />
+      <div className="p-4 sm:p-6 lg:p-8">
+        {renderPage()}
       </div>
     </div>
   );
