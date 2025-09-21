@@ -14,7 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ chapters, selectedVideo, onSelectVide
     <aside className="w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 flex-shrink-0">
       <div className="h-full overflow-y-auto">
         <div className="p-4 sticky top-0 bg-white/80 backdrop-blur-sm z-10 border-b border-slate-200">
-          <h2 className="text-xl font-semibold text-slate-900">Course Content</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Subject Content</h2>
         </div>
         <nav className="p-4 space-y-4">
           {chapters.map((chapter) => (

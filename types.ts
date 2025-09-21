@@ -10,3 +10,9 @@ export interface Chapter {
   title: string;
   videos: VideoLink[];
 }
+
+export interface Course {
+    id: number;
+    name: string;
+    chapters: Chapter[];
+}
