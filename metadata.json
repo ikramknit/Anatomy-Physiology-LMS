@@ -1,0 +1,5 @@
+{
+  "name": "Anatomy & Physiology LMS",
+  "description": "A simple learning management system for the 'Elementary Human Anatomy and Physiology' course, featuring a curated list of video lectures from YouTube.",
+  "requestFramePermissions": []
+}
