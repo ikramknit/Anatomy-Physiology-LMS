@@ -13,12 +13,26 @@ type CurrentUser = {
   user?: Student | { id: string; email: string };
 };
 
+const getInitialState = <T,>(key: string, defaultValue: T): T => {
+    try {
+        const savedState = localStorage.getItem(key);
+        if (savedState) {
+            return JSON.parse(savedState);
+        }
+    } catch (error) {
+        console.error(`Failed to parse ${key} from localStorage`, error);
+        localStorage.removeItem(key);
+    }
+    return defaultValue;
+};
+
+
 const App: React.FC = () => {
   const [route, setRoute] = useState(window.location.hash || '#home');
   const [programs, setPrograms] = useState<Program[]>(PROGRAM_DATA);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
-  const [currentUser, setCurrentUser] = useState<CurrentUser>({ role: 'guest' });
+  const [students, setStudents] = useState<Student[]>(() => getInitialState<Student[]>('students', []));
+  const [activityLog, setActivityLog] = useState<ActivityLog[]>(() => getInitialState<ActivityLog[]>('activityLog', []));
+  const [currentUser, setCurrentUser] = useState<CurrentUser>(() => getInitialState<CurrentUser>('currentUser', { role: 'guest' }));
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -30,6 +44,35 @@ const App: React.FC = () => {
       window.removeEventListener('hashchange', handleHashChange);
     };
   }, []);
+
+  useEffect(() => {
+    try {
+        if (currentUser.role === 'guest') {
+            localStorage.removeItem('currentUser');
+        } else {
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        }
+    } catch (error) {
+        console.error("Error saving currentUser to localStorage", error);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    try {
+        localStorage.setItem('students', JSON.stringify(students));
+    } catch (error) {
+        console.error("Error saving students to localStorage", error);
+    }
+  }, [students]);
+
+  useEffect(() => {
+    try {
+        localStorage.setItem('activityLog', JSON.stringify(activityLog));
+    } catch (error) {
+        console.error("Error saving activityLog to localStorage", error);
+    }
+  }, [activityLog]);
+
 
   const handleAdminLogin = (success: boolean) => {
     if (success) {
